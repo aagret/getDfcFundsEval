@@ -1,0 +1,44 @@
+---
+title: "DharmaResearch SICAV - DR Global Credit Fund"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+classoption: landscape
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+```
+
+## Funds positions latest prices:
+
+```{r include=FALSE}
+library(Rblpapi)
+library(data.table)
+
+proper=function(s) sub("(.)", ("\\U\\1"), tolower(s), pe=TRUE)
+
+securities <- as.character(read.csv("M:/Alexandre/R-Projects/_fromBloomberg/getDfcFundsEval/Config/securitiesList.csv", header=FALSE)[,1])
+fields     <- as.character(read.csv("M:/Alexandre/R-Projects/_fromBloomberg/getDfcFundsEval/Config/fields.csv", header= FALSE)[,1])
+
+con <- blpConnect()
+
+fundsData <-setDT(bdp(securities, fields))
+
+colnames(fundsData) <- c("Name", "Ccy", "Last", "Date", "PX%_Chg_1d",
+                         "Px%_Chg_Wtd","Trr%_Chg_Mtd","Trr%_Chg_Ytd","TotAssets")
+fundsData[, (names(fundsData)[5:8]) := round(.SD, 2), .SDcols=names(fundsData)[5:8]]
+fundsData[, TotAssets:=round(TotAssets,0)]
+fundsData[, Name:=proper(Name)]
+fundsData[, Ccy:=proper(Ccy)]
+
+
+```
+```{r}
+library(knitr)
+dt <- as.Date(Sys.Date(), "%d-%m-%Y")
+kable(fundsData, caption= dt)
+```
+
